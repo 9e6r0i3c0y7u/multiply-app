@@ -1,8 +1,0 @@
-{
-  "name": "乘法練習",
-  "short_name": "乘法",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0b1020",
-  "theme_color": "#111827"
-}
