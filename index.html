@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <title>乘法練習（網頁版）</title>
+  <title>四則練習</title>
   <link rel="manifest" href="manifest.webmanifest">
 <style>
     :root { --bg:#0b1020; --card:#111827; --muted:#9ca3af; --text:#e5e7eb; --line:#243047; --btn:#2563eb; --btn2:#374151; }
@@ -41,7 +41,7 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>乘法練習（網頁版 / 離線可用）</h1>
+    <h1>四則練習</h1>
 
     <div class="grid">
       <!-- Settings -->
@@ -74,11 +74,11 @@
 
         <div class="row">
           <div>
-            <label>被乘數位數</label><br>
+            <label>位數1</label><br>
             <input type="number" id="digitsA" min="1" max="6" value="1">
           </div>
           <div>
-            <label>乘數位數</label><br>
+            <label>位數2</label><br>
             <input type="number" id="digitsB" min="1" max="6" value="1">
         </div>
 
@@ -255,14 +255,15 @@
     }
     idx += 1;
 
-    const ops = [];
-    if ($("opAdd").checked) ops.push("+");
-    if ($("opSub").checked) ops.push("-");
-    if ($("opMul").checked) ops.push("*");
-    if ($("opDiv").checked) ops.push("/");
-    const op = ops.length ? ops[randInt(0, ops.length-1)] : "*";
-    const da = Number($("digitsA").value)||1;
-    const db = Number($("digitsB").value)||1;
+    const ops = [
+  $("opAdd")?.checked ? "+" : null,
+  $("opSub")?.checked ? "-" : null,
+  $("opMul")?.checked ? "*" : null,
+  $("opDiv")?.checked ? "/" : null,
+].filter(Boolean);
+
+const op = ops.length ? ops[randInt(0, ops.length - 1)] : "*";
+    console.log("checked ops =", ops, "chosen =", op);
     if(op === "+"){
       a = randWithDigits(da);
       b = randWithDigits(db);
@@ -503,3 +504,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
