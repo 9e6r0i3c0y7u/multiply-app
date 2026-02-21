@@ -263,28 +263,44 @@
 ].filter(Boolean);
 
 const op = ops.length ? ops[randInt(0, ops.length - 1)] : "*";
-    console.log("checked ops =", ops, "chosen =", op);
-    if(op === "+"){
-      a = randWithDigits(da);
-      b = randWithDigits(db);
-      correctAns = a + b;
-      qText = `${a} + ${b}`;
-    }
-    else if(op === "*"){
-      a = randWithDigits(da);
-      b = randWithDigits(db);
-      correctAns = a * b;
-      qText = `${a} × ${b}`;
-    }
-    else{
-      b = randWithDigits(db);
-      const q = randWithDigits(da);
-      a = b*q;
-      correctAns = q;
-      qText = `${a} ÷ ${b}`;
-    }
-    $("progress").textContent = `第 ${idx} / ${total} 題`;
-    $("question").textContent = `${qText} = ?`;
+console.log("checked ops =", ops, "chosen =", op);
+
+if(op === "+"){
+  a = randWithDigits(da);
+  b = randWithDigits(db);
+  correctAns = a + b;
+  qText = `${a} + ${b}`;
+}
+else if(op === "-"){
+  a = randWithDigits(da);
+  b = randWithDigits(db);
+  if(b > a) [a, b] = [b, a];   // 避免負數
+  correctAns = a - b;
+  qText = `${a} - ${b}`;
+}
+else if(op === "*"){
+  a = randWithDigits(da);
+  b = randWithDigits(db);
+  correctAns = a * b;
+  qText = `${a} × ${b}`;
+}
+else if(op === "/"){
+  b = randWithDigits(db);
+  const q = randWithDigits(da);
+  a = b * q;                  // 保證整除
+  correctAns = q;
+  qText = `${a} ÷ ${b}`;
+}
+else{
+  // 保底：萬一 op 不明，就用乘法
+  a = randWithDigits(da);
+  b = randWithDigits(db);
+  correctAns = a * b;
+  qText = `${a} × ${b}`;
+}
+
+$("progress").textContent = `第 ${idx} / ${total} 題`;
+$("question").textContent = `${qText} = ?`;
     $("answer").value = "";
     $("answer").focus();
     setFeedback("", "");
@@ -504,4 +520,5 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
