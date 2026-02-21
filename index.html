@@ -171,6 +171,8 @@
   let running=false;
   let total=10, idx=0;
   let a=null,b=null;
+  let correctAns=null;
+  let qText="";
   let correct=0, wrong=0, timeout=0;
 
   let noLimit=false;
@@ -253,13 +255,35 @@
     }
     idx += 1;
 
+    const ops = [];
+    if ($("opAdd").checked) ops.push("+");
+    if ($("opSub").checked) ops.push("-");
+    if ($("opMul").checked) ops.push("*");
+    if ($("opDiv").checked) ops.push("/");
+    const op = ops.length ? ops[randInt(0, ops.length-1)] : "*";
     const da = Number($("digitsA").value)||1;
     const db = Number($("digitsB").value)||1;
-    a = randWithDigits(da);
-    b = randWithDigits(db);
-
+    if(op === "+"){
+      a = randWithDigits(da);
+      b = randWithDigits(db);
+      correctAns = a + b;
+      qText = `${a} + ${b}`;
+    }
+    else if(op === "*"){
+      a = randWithDigits(da);
+      b = randWithDigits(db);
+      correctAns = a * b;
+      qText = `${a} × ${b}`;
+    }
+    else{
+      b = randWithDigits(db);
+      const q = randWithDigits(da);
+      a = b*q;
+      correctAns = q;
+      qText = `${a} ÷ ${b}`;
+    }
     $("progress").textContent = `第 ${idx} / ${total} 題`;
-    $("question").textContent = `${a} × ${b} = ?`;
+    $("question").textContent = `${qText} = ?`;
     $("answer").value = "";
     $("answer").focus();
     setFeedback("", "");
@@ -276,62 +300,63 @@
   }
 
   function appendRecord(userAnswer, result){
-    const correctAns = a*b;
-    const rt = (qStartMs ? (Date.now()-qStartMs)/1000 : null);
-    const rec = {
-      idx: records.length+1,
-      a, b,
-      question: `${a}×${b}`,
-      user_answer: userAnswer,
-      correct_answer: String(correctAns),
-      result,
-      reaction_sec: (typeof rt==="number" && isFinite(rt)) ? round2(rt) : null,
-      timestamp: nowStamp(),
-    };
-    records.push(rec);
-    saveRecords();
-    renderTable();
-  }
+  const rt = (qStartMs ? (Date.now()-qStartMs)/1000 : null);
+
+  const rec = {
+    idx: records.length + 1,
+    a, b,
+    question: qText,                    // ✅ 四則題目字串
+    user_answer: userAnswer,
+    correct_answer: String(correctAns), // ✅ 四則正解
+    result,
+    reaction_sec: (typeof rt==="number" && isFinite(rt)) ? round2(rt) : null,
+    timestamp: nowStamp(),
+  };
+
+  records.push(rec);
+  saveRecords();
+  renderTable();
+}
 
   function onTimeout(){
     cancelTimer();
     timeout += 1;
-    setFeedback(`⏱ 超時！正解 ${a*b}`, "warn");
+    setFeedback(`⏱ 超時！正解 ${correctAns}`, "warn");
     appendRecord("(超時)", "超時");
     updateStats();
     setTimeout(nextQuestion, 700);
   }
 
   function submit(){
-    if(!running) return;
-    if(!noLimit) cancelTimer();
+  if(!running) return;
+  if(!noLimit) cancelTimer();
 
-    const text = $("answer").value.trim();
-    if(!/^-?\d+$/.test(text)){
-      setFeedback("請輸入整數", "warn");
-      if(!noLimit){
-        // 讓你修正，不立刻判錯
-        remaining = Math.max(remaining, 1);
-        startTimer();
-      }
-      return;
+  const text = $("answer").value.trim();
+  if(!/^-?\d+$/.test(text)){
+    setFeedback("請輸入整數", "warn");
+    if(!noLimit){
+      remaining = Math.max(remaining, 1);
+      startTimer();
     }
-    const userVal = parseInt(text,10);
-    const correctAns = a*b;
-
-    if(userVal === correctAns){
-      correct += 1;
-      setFeedback("✅ 正確！", "ok");
-      appendRecord(String(userVal), "正確");
-    }else{
-      wrong += 1;
-      setFeedback(`❌ 錯誤！正解 ${correctAns}`, "bad");
-      appendRecord(String(userVal), "錯誤");
-    }
-
-    updateStats();
-    setTimeout(nextQuestion, 500);
+    return;
   }
+
+  const userVal = parseInt(text,10);
+  const correctAnsLocal = correctAns;   // ✅ 這裡用全域 correctAns
+
+  if(userVal === correctAnsLocal){
+    correct += 1;
+    setFeedback("✅ 正確！", "ok");
+    appendRecord(String(userVal), "正確");
+  }else{
+    wrong += 1;
+    setFeedback(`❌ 錯誤！正解 ${correctAnsLocal}`, "bad");
+    appendRecord(String(userVal), "錯誤");
+  }
+
+  updateStats();
+  setTimeout(nextQuestion, 500);
+}
 
   function toCSV(){
     const headers = ["序號","題目","被乘數","乘數","你的答案","正確答案","結果","反應秒數","時間戳記"];
