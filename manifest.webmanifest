@@ -1,5 +1,5 @@
 {
-  "name": "四則練習",
+  "name": "乘法練習",
   "short_name": "乘法",
   "start_url": "./index.html",
   "display": "standalone",
@@ -7,3 +7,4 @@
   "theme_color": "#111827"
 
 }
+
