@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <title>四則練習</title>
+  <title>乘法練習（網頁版）</title>
   <link rel="manifest" href="manifest.webmanifest">
 <style>
     :root { --bg:#0b1020; --card:#111827; --muted:#9ca3af; --text:#e5e7eb; --line:#243047; --btn:#2563eb; --btn2:#374151; }
@@ -41,7 +41,7 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>四則練習</h1>
+    <h1>乘法練習（網頁版 / 離線可用）</h1>
 
     <div class="grid">
       <!-- Settings -->
@@ -74,23 +74,12 @@
 
         <div class="row">
           <div>
-            <label>位數1</label><br>
+            <label>被乘數位數</label><br>
             <input type="number" id="digitsA" min="1" max="6" value="1">
           </div>
           <div>
-            <label>位數2</label><br>
+            <label>乘數位數</label><br>
             <input type="number" id="digitsB" min="1" max="6" value="1">
-        </div>
-
-        <div class="row">
-        <div>
-            <label>運算類型</label><br>
-            <label><input type="checkbox" id="opAdd" checked> +</label>
-            <label><input type="checkbox" id="opSub" checked> -</label>
-            <label><input type="checkbox" id="opMul" checked> ×</label>
-            <label><input type="checkbox" id="opDiv" checked> ÷</label>
-        </div>
-      </div>
           </div>
           <div class="right">
             <label class="switch">
@@ -171,8 +160,6 @@
   let running=false;
   let total=10, idx=0;
   let a=null,b=null;
-  let correctAns=null;
-  let qText="";
   let correct=0, wrong=0, timeout=0;
 
   let noLimit=false;
@@ -232,158 +219,108 @@
     if(timerHandle){ clearInterval(timerHandle); timerHandle=null; }
   }
 
-function startTimer(){
-  cancelTimer();
-  if(noLimit) {
-    $("timer").textContent = "不限時";
-    return;
+  function startTimer(){
+    cancelTimer();
+    $("timer").textContent = `倒數：${remaining} 秒`;
+    timerHandle = setInterval(()=>{
+      if(!running || noLimit){ cancelTimer(); return; }
+      remaining -= 1;
+      if(remaining <= 0){
+        $("timer").textContent = `倒數：0 秒`;
+        onTimeout();
+        return;
+      }
+      $("timer").textContent = `倒數：${remaining} 秒`;
+    }, 1000);
   }
 
-  $("timer").textContent = `倒數：${remaining} 秒`;
-  timerHandle = setInterval(() => {
-    if(!running){               // ✅ 停止/結算後才停計時
-      cancelTimer();
-      return;
-    }
-    remaining -= 1;
-
-    if(remaining <= 0){
-      $("timer").textContent = "倒數：0 秒";
-      cancelTimer();
-      onTimeout();
-      return;
-    }
-    $("timer").textContent = `倒數：${remaining} 秒`;
-  }, 1000);
-}}
-
   function nextQuestion(){
+    if(!running) return;
     if(idx >= total){
       finishGame(true);
       return;
     }
     idx += 1;
-    const da = Number($("digitsA").value) || 1;
-    const db = Number($("digitsB").value) || 1;
-    const ops = [
-  $("opAdd")?.checked ? "+" : null,
-  $("opSub")?.checked ? "-" : null,
-  $("opMul")?.checked ? "*" : null,
-  $("opDiv")?.checked ? "/" : null,
-].filter(Boolean);
 
-const op = ops.length ? ops[randInt(0, ops.length - 1)] : "*";
-console.log("checked ops =", ops, "chosen =", op);
+    const da = Number($("digitsA").value)||1;
+    const db = Number($("digitsB").value)||1;
+    a = randWithDigits(da);
+    b = randWithDigits(db);
 
-if(op === "+"){
-  a = randWithDigits(da);
-  b = randWithDigits(db);
-  correctAns = a + b;
-  qText = `${a} + ${b}`;
-}
-else if(op === "-"){
-  a = randWithDigits(da);
-  b = randWithDigits(db);
-  if(b > a) [a, b] = [b, a];   // 避免負數
-  correctAns = a - b;
-  qText = `${a} - ${b}`;
-}
-else if(op === "*"){
-  a = randWithDigits(da);
-  b = randWithDigits(db);
-  correctAns = a * b;
-  qText = `${a} × ${b}`;
-}
-else if(op === "/"){
-  b = randWithDigits(db);
-  const q = randWithDigits(da);
-  a = b * q;                  // 保證整除
-  correctAns = q;
-  qText = `${a} ÷ ${b}`;
-}
-else{
-  // 保底：萬一 op 不明，就用乘法
-  a = randWithDigits(da);
-  b = randWithDigits(db);
-  correctAns = a * b;
-  qText = `${a} × ${b}`;
-}
-
-$("progress").textContent = `第 ${idx} / ${total} 題`;
-$("question").textContent = `${qText} = ?`;
+    $("progress").textContent = `第 ${idx} / ${total} 題`;
+    $("question").textContent = `${a} × ${b} = ?`;
     $("answer").value = "";
     $("answer").focus();
     setFeedback("", "");
-remaining = Math.max(1, Number($("seconds").value) || 5);
 
-qStartMs = Date.now();  // ← 建議先記開始時間
+    qStartMs = Date.now();
 
-if(noLimit){
-  cancelTimer();                 // ⭐ 保險：避免舊 timer 還在跑
-  $("timer").textContent = "不限時";
-}else{
-  startTimer();
-}
+    if(noLimit){
+      $("timer").textContent = "不限時";
+      return;
+    }
 
+    remaining = timeLimit;
+    startTimer();
+  }
 
   function appendRecord(userAnswer, result){
-  const rt = (qStartMs ? (Date.now()-qStartMs)/1000 : null);
-
-  const rec = {
-    idx: records.length + 1,
-    a, b,
-    question: qText,                    // ✅ 四則題目字串
-    user_answer: userAnswer,
-    correct_answer: String(correctAns), // ✅ 四則正解
-    result,
-    reaction_sec: (typeof rt==="number" && isFinite(rt)) ? round2(rt) : null,
-    timestamp: nowStamp(),
-  };
-
-  records.push(rec);
-  saveRecords();
-  renderTable();
-}
+    const correctAns = a*b;
+    const rt = (qStartMs ? (Date.now()-qStartMs)/1000 : null);
+    const rec = {
+      idx: records.length+1,
+      a, b,
+      question: `${a}×${b}`,
+      user_answer: userAnswer,
+      correct_answer: String(correctAns),
+      result,
+      reaction_sec: (typeof rt==="number" && isFinite(rt)) ? round2(rt) : null,
+      timestamp: nowStamp(),
+    };
+    records.push(rec);
+    saveRecords();
+    renderTable();
+  }
 
   function onTimeout(){
     cancelTimer();
     timeout += 1;
-    setFeedback(`⏱ 超時！正解 ${correctAns}`, "warn");
+    setFeedback(`⏱ 超時！正解 ${a*b}`, "warn");
     appendRecord("(超時)", "超時");
     updateStats();
     setTimeout(nextQuestion, 700);
   }
 
   function submit(){
-  if(!running) return;
-  if(!noLimit) cancelTimer();
+    if(!running) return;
+    if(!noLimit) cancelTimer();
 
-  const text = $("answer").value.trim();
-  if(!/^-?\d+$/.test(text)){
-    setFeedback("請輸入整數", "warn");
-    if(!noLimit){
-      remaining = Math.max(remaining, 1);
-      startTimer();
+    const text = $("answer").value.trim();
+    if(!/^-?\d+$/.test(text)){
+      setFeedback("請輸入整數", "warn");
+      if(!noLimit){
+        // 讓你修正，不立刻判錯
+        remaining = Math.max(remaining, 1);
+        startTimer();
+      }
+      return;
     }
-    return;
+    const userVal = parseInt(text,10);
+    const correctAns = a*b;
+
+    if(userVal === correctAns){
+      correct += 1;
+      setFeedback("✅ 正確！", "ok");
+      appendRecord(String(userVal), "正確");
+    }else{
+      wrong += 1;
+      setFeedback(`❌ 錯誤！正解 ${correctAns}`, "bad");
+      appendRecord(String(userVal), "錯誤");
+    }
+
+    updateStats();
+    setTimeout(nextQuestion, 500);
   }
-
-  const userVal = parseInt(text,10);
-  const correctAnsLocal = correctAns;   // ✅ 這裡用全域 correctAns
-
-  if(userVal === correctAnsLocal){
-    correct += 1;
-    setFeedback("✅ 正確！", "ok");
-    appendRecord(String(userVal), "正確");
-  }else{
-    wrong += 1;
-    setFeedback(`❌ 錯誤！正解 ${correctAnsLocal}`, "bad");
-    appendRecord(String(userVal), "錯誤");
-  }
-
-  updateStats();
-  setTimeout(nextQuestion, 500);
-}
 
   function toCSV(){
     const headers = ["序號","題目","被乘數","乘數","你的答案","正確答案","結果","反應秒數","時間戳記"];
@@ -530,6 +467,3 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-
-
-
