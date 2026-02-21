@@ -232,29 +232,39 @@
     if(timerHandle){ clearInterval(timerHandle); timerHandle=null; }
   }
 
-  function startTimer(){
-    cancelTimer();
-    $("timer").textContent = `倒數：${remaining} 秒`;
-    timerHandle = setInterval(()=>{
-      if(!running || noLimit){ cancelTimer(); return; }
-      remaining -= 1;
-      if(remaining <= 0){
-        $("timer").textContent = `倒數：0 秒`;
-        onTimeout();
-        return;
-      }
-      $("timer").textContent = `倒數：${remaining} 秒`;
-    }, 1000);
+function startTimer(){
+  cancelTimer();
+  if(noLimit) {
+    $("timer").textContent = "不限時";
+    return;
   }
 
+  $("timer").textContent = `倒數：${remaining} 秒`;
+  timerHandle = setInterval(() => {
+    if(!running){               // ✅ 停止/結算後才停計時
+      cancelTimer();
+      return;
+    }
+    remaining -= 1;
+
+    if(remaining <= 0){
+      $("timer").textContent = "倒數：0 秒";
+      cancelTimer();
+      onTimeout();
+      return;
+    }
+    $("timer").textContent = `倒數：${remaining} 秒`;
+  }, 1000);
+}}
+
   function nextQuestion(){
-    if(!running) return;
     if(idx >= total){
       finishGame(true);
       return;
     }
     idx += 1;
-
+    const da = Number($("digitsA").value) || 1;
+    const db = Number($("digitsB").value) || 1;
     const ops = [
   $("opAdd")?.checked ? "+" : null,
   $("opSub")?.checked ? "-" : null,
@@ -304,17 +314,17 @@ $("question").textContent = `${qText} = ?`;
     $("answer").value = "";
     $("answer").focus();
     setFeedback("", "");
+remaining = Math.max(1, Number($("seconds").value) || 5);
 
-    qStartMs = Date.now();
+qStartMs = Date.now();  // ← 建議先記開始時間
 
-    if(noLimit){
-      $("timer").textContent = "不限時";
-      return;
-    }
+if(noLimit){
+  cancelTimer();                 // ⭐ 保險：避免舊 timer 還在跑
+  $("timer").textContent = "不限時";
+}else{
+  startTimer();
+}
 
-    remaining = timeLimit;
-    startTimer();
-  }
 
   function appendRecord(userAnswer, result){
   const rt = (qStartMs ? (Date.now()-qStartMs)/1000 : null);
@@ -520,5 +530,6 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
