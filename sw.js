@@ -1,4 +1,4 @@
-const CACHE_NAME = "app-cache-v3";
+const CACHE_NAME = "app-cache-v3.0";
 const ASSETS = [
   "./",
   "./index.html",
@@ -32,5 +32,6 @@ self.addEventListener("fetch", (e) => {
     caches.match(e.request).then((r) => r || fetch(e.request))
   );
 });
+
 
 
